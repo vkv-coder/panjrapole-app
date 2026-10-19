@@ -295,6 +295,47 @@ body {
 .amount-input-wrap::before { content: '₹'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--primary); font-size: 15px; }
 .amount-input-wrap input { padding-left: 28px !important; font-size: 18px !important; font-weight: 700 !important; }
 
+/* ========== FOOTER (privacy / support / powered-by, on every page) ========== */
+.app-footer {
+  text-align: center;
+  padding: 18px 16px 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.app-footer .footer-links {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.app-footer .footer-links a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+.app-footer .support-line {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.app-footer .support-line a { color: var(--primary); text-decoration: none; }
+.app-footer .powered-by {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+.anyapps-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #0F1B3D;
+  color: #ffffff;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  text-decoration: none;
+  vertical-align: middle;
+}
+.anyapps-badge .accent { color: #FF6B35; }
+
 /* ========== CART (donation heads picked for this receipt) ========== */
 .cart-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .cart-row:last-child { border-bottom: none; }

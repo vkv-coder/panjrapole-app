@@ -2,6 +2,7 @@ const CACHE_NAME = 'panjrapole-v1';
 const SHELL_FILES = [
   '/index.html',
   '/signup.html',
+  '/privacy.html',
   '/css/style.css',
   '/js/config.js',
   '/js/auth.js',
