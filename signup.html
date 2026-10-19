@@ -71,8 +71,23 @@ async function doSignup() {
   });
   if (profileErr) { errEl.textContent = 'Error creating profile: ' + profileErr.message; return; }
 
+  notifyAdminNewSignup(name, email);
   showToast('✅ Account created! Ask your admin to activate it before you log in.', 'success');
   setTimeout(() => { window.location.href = 'index.html'; }, 2500);
+}
+
+// Best-effort alert to the admin via the shared Telegram relay worker —
+// never blocks signup if it fails (offline, worker down, etc.).
+function notifyAdminNewSignup(name, email) {
+  try {
+    fetch('https://telegram-notify.unigoods2026.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        msg: '🐄 New Panjrapole sign-up pending approval\n\nName: ' + name + '\nEmail: ' + email + '\n\nActivate it from Admin → Clerks.'
+      })
+    }).catch(() => {});
+  } catch (e) {}
 }
 </script>
 </body>
