@@ -307,6 +307,12 @@ body {
   .total-grid { grid-template-columns: repeat(2, 1fr); }
   .data-table { font-size: 12px; }
   .data-table th, .data-table td { padding: 8px; }
+
+  /* Wrap nav tabs onto as many lines as needed instead of scrolling
+     sideways - with 7 admin tabs, single-line + horizontal scroll meant
+     Reports/Settings etc. were hidden off-screen until you scrolled. */
+  .nav-tabs { flex-wrap: wrap; overflow-x: visible; justify-content: center; }
+  .nav-tab { padding: 8px 12px; font-size: 12px; }
 }
 
 /* ========== PRINT STYLES (for the app shell itself, not the receipt popup) ========== */
