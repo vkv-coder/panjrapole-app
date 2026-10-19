@@ -1,0 +1,14 @@
+{
+  "name": "Panjrapole Donation Entry",
+  "short_name": "Panjrapole",
+  "description": "Donation receipt entry and admin tools for the Panjrapole.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FDF6EC",
+  "theme_color": "#7B3F00",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
