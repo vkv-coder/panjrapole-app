@@ -12,7 +12,7 @@ async function renderClerks() {
 
   content.innerHTML = `
     <div class="card">
-      <div class="card-title">👤 Clerk &amp; Admin Accounts</div>
+      <div class="card-title">👤 Accountant &amp; Admin Accounts</div>
       <p style="font-size:12px;color:var(--text-muted);">New sign-ups (signup.html) appear here as pending — activate them to let them log in.</p>
       <div id="clerks-list">Loading...</div>
     </div>
@@ -41,7 +41,7 @@ async function loadClerksList() {
         ${!p.active ? `<button class="btn-sm btn-accent" onclick="setProfile('${p.id}','${p.role}',true)">Activate</button>` : ''}
         ${p.active && p.id !== currentUser.id ? `<button class="btn-sm btn-danger" onclick="setProfile('${p.id}','${p.role}',false)">Deactivate</button>` : ''}
         ${p.role === 'clerk' ? `<button class="btn-sm btn-secondary" onclick="setProfile('${p.id}','admin',${p.active})">Make Admin</button>` : ''}
-        ${p.role === 'admin' && p.id !== currentUser.id ? `<button class="btn-sm btn-secondary" onclick="setProfile('${p.id}','clerk',${p.active})">Make Clerk</button>` : ''}
+        ${p.role === 'admin' && p.id !== currentUser.id ? `<button class="btn-sm btn-secondary" onclick="setProfile('${p.id}','clerk',${p.active})">Make Accountant</button>` : ''}
       </div>
     </div>
   `).join('');

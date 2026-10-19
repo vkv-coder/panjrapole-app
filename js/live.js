@@ -15,7 +15,7 @@ async function renderLive() {
   content.innerHTML = `
     <div class="card">
       <div class="section-header"><h3><span class="live-dot"></span> Live Totals</h3></div>
-      <p style="font-size:12px;color:var(--text-muted);">Updates automatically as clerks save new receipts.</p>
+      <p style="font-size:12px;color:var(--text-muted);">Updates automatically as accountants save new receipts.</p>
     </div>
     <div id="live-content"></div>
   `;

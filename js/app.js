@@ -6,7 +6,7 @@ let activeTab = '';
 
 async function initApp() {
   const badge = document.getElementById('user-role-badge');
-  badge.textContent = isAdmin() ? 'Admin' : 'Clerk';
+  badge.textContent = isAdmin() ? 'Admin' : 'Accountant';
   buildNav();
   loadTab('entry');
 }
@@ -20,7 +20,7 @@ function buildNav() {
     { id: 'live', label: '🔴 Live Totals' },
     { id: 'receipts', label: '🧾 Receipts' },
     { id: 'heads', label: '📋 Heads' },
-    { id: 'clerks', label: '👤 Clerks' },
+    { id: 'clerks', label: '👤 Accountants' },
     { id: 'reports', label: '📊 Reports' },
     { id: 'settings', label: '⚙ Settings' },
   ];

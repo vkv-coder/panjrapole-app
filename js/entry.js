@@ -90,7 +90,7 @@ async function renderEntry() {
     </div>
 
     <div class="card">
-      <div class="card-title">🧾 Today's Entries ${isAdmin() ? '(All Clerks)' : '(by me)'}</div>
+      <div class="card-title">🧾 Today's Entries ${isAdmin() ? '(All Accountants)' : '(by me)'}</div>
       <div id="today-entries">Loading...</div>
     </div>
   `;
