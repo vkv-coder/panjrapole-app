@@ -72,7 +72,7 @@ async function searchReceipts() {
                 <td>${formatDate(r.receipt_date)}</td>
                 <td>${r.donor_name}<div class="list-item-sub">${r.donor_city} · ${r.donor_whatsapp}</div></td>
                 <td><strong>${formatAmount(r.total_amount)}</strong></td>
-                <td><span class="badge ${r.payment_mode === 'cash' ? 'badge-cash' : 'badge-online'}">${r.payment_mode}</span></td>
+                <td><span class="badge ${paymentBadgeClass(r.payment_mode)}">${r.payment_mode}</span></td>
                 <td><span class="badge ${r.locked ? 'badge-locked' : 'badge-open'}">${r.locked ? 'Printed' : 'Open'}</span></td>
                 <td>
                   <div class="list-item-actions">

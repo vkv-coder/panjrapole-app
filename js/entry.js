@@ -3,7 +3,7 @@
 // ==========================================
 
 let entryHeads = [];
-let entryCart = []; // [{ head_id, head_name, amount }]
+let entryCart = []; // [{ head_id, head_name, amount, remark }]
 let editingReceiptId = null; // non-null while editing an existing receipt
 
 async function renderEntry() {
@@ -64,11 +64,24 @@ async function renderEntry() {
         <select id="e-payment-mode" onchange="onPaymentModeChange()">
           <option value="cash">💵 Cash</option>
           <option value="online">📱 Online</option>
+          <option value="cheque">🏦 Cheque</option>
         </select>
       </div>
       <div class="form-group" id="e-ref-group" style="display:none;">
-        <label>Transaction / Reference No. *</label>
+        <label id="e-ref-label">Transaction / Reference No. *</label>
         <input type="text" id="e-payment-ref" placeholder="UPI / Bank transaction no." />
+      </div>
+      <div class="form-group" id="e-cheque-group" style="display:none;">
+        <label>Cheque No. *</label>
+        <input type="text" id="e-cheque-no" placeholder="Cheque number" />
+      </div>
+      <div class="form-group" id="e-cheque-date-group" style="display:none;">
+        <label>Cheque Date</label>
+        <input type="date" id="e-cheque-date" />
+      </div>
+      <div class="form-group" id="e-bank-group" style="display:none;">
+        <label>Bank Name</label>
+        <input type="text" id="e-bank-name" placeholder="Bank name" />
       </div>
       <button class="btn-primary" id="e-save-btn" onclick="saveReceipt()">💾 Save Receipt</button>
       <div id="e-cancel-edit" style="display:none;margin-top:10px;text-align:center;">
@@ -90,13 +103,19 @@ function onWant80gChange() {
   const checked = document.getElementById('e-want-80g').checked;
   document.getElementById('e-pan-group').style.display = checked ? 'block' : 'none';
 }
+
 function onPaymentModeChange() {
   const mode = document.getElementById('e-payment-mode').value;
   document.getElementById('e-ref-group').style.display = mode === 'online' ? 'block' : 'none';
+  document.getElementById('e-cheque-group').style.display = mode === 'cheque' ? 'block' : 'none';
+  document.getElementById('e-cheque-date-group').style.display = mode === 'cheque' ? 'block' : 'none';
+  document.getElementById('e-bank-group').style.display = (mode === 'cheque' || mode === 'online') ? 'block' : 'none';
+  const refLabel = document.getElementById('e-ref-label');
+  if (refLabel) refLabel.textContent = 'Transaction / UPI Reference No. *';
 }
 
 function addCartRow() {
-  entryCart.push({ head_id: '', head_name: '', amount: '' });
+  entryCart.push({ head_id: '', head_name: '', amount: '', remark: '' });
   renderCartList();
 }
 
@@ -123,7 +142,7 @@ function renderCartList() {
     return;
   }
   el.innerHTML = entryCart.map((row, i) => `
-    <div class="cart-row">
+    <div class="cart-row" style="flex-wrap:wrap;">
       <select class="cart-head-name" onchange="updateCartRow(${i},'head_id',this.value)">
         <option value="">-- Select Head --</option>
         ${entryHeads.map(h => `<option value="${h.id}" ${row.head_id === h.id ? 'selected' : ''}>${h.name}</option>`).join('')}
@@ -132,6 +151,7 @@ function renderCartList() {
         <input type="number" min="1" placeholder="0" value="${row.amount}" oninput="updateCartRow(${i},'amount',this.value)" />
       </div>
       <button class="btn-sm btn-danger" onclick="removeCartRow(${i})">✕</button>
+      <input type="text" placeholder="Remark (optional)" value="${row.remark || ''}" style="flex-basis:100%;margin-top:6px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;" oninput="updateCartRow(${i},'remark',this.value)" />
     </div>
   `).join('');
   renderCartTotalOnly();
@@ -149,7 +169,7 @@ function buildItemsPayload() {
   for (const row of entryCart) {
     const amt = parseFloat(row.amount);
     if (!row.head_id || !amt || amt <= 0) continue;
-    items.push({ head_id: row.head_id, amount: amt });
+    items.push({ head_id: row.head_id, amount: amt, remark: (row.remark || '').trim() || null });
   }
   return items;
 }
@@ -162,43 +182,43 @@ async function saveReceipt() {
   const address = document.getElementById('e-address').value.trim();
   const email = document.getElementById('e-email').value.trim();
   const want80g = document.getElementById('e-want-80g').checked;
-  const pan = document.getElementById('e-pan').value.trim();
+  const pan = document.getElementById('e-pan').value.trim().toUpperCase();
   const paymentMode = document.getElementById('e-payment-mode').value;
   const paymentRef = document.getElementById('e-payment-ref').value.trim();
+  const chequeNo = document.getElementById('e-cheque-no').value.trim();
+  const chequeDate = document.getElementById('e-cheque-date').value || null;
+  const bankName = document.getElementById('e-bank-name').value.trim();
 
   if (!name) { showToast('Enter donor name', 'error'); return; }
   if (whatsapp.length !== 10) { showToast('Enter a valid 10-digit WhatsApp number', 'error'); return; }
   if (!city) { showToast('Enter city', 'error'); return; }
   if (want80g && !pan) { showToast('PAN is required for an 80G receipt', 'error'); return; }
   if (paymentMode === 'online' && !paymentRef) { showToast('Enter the transaction/reference number', 'error'); return; }
+  if (paymentMode === 'cheque' && !chequeNo) { showToast('Enter the cheque number', 'error'); return; }
 
   const items = buildItemsPayload();
   if (items.length === 0) { showToast('Add at least one donation head with an amount', 'error'); return; }
+
+  const rpcArgs = {
+    p_donor_name: name, p_donor_whatsapp: whatsapp, p_donor_city: city,
+    p_donor_address: address || null, p_donor_email: email || null, p_donor_pan: pan || null,
+    p_want_80g: want80g, p_payment_mode: paymentMode, p_payment_ref: paymentRef || null,
+    p_bank_name: bankName || null, p_cheque_no: chequeNo || null, p_cheque_date: chequeDate,
+    p_items: items
+  };
 
   btn.disabled = true; btn.textContent = 'Saving…';
   try {
     let result;
     if (editingReceiptId) {
-      result = await db.rpc('pj_update_receipt', {
-        p_receipt_id: editingReceiptId,
-        p_donor_name: name, p_donor_whatsapp: whatsapp, p_donor_city: city,
-        p_donor_address: address || null, p_donor_email: email || null, p_donor_pan: pan || null,
-        p_want_80g: want80g, p_payment_mode: paymentMode, p_payment_ref: paymentRef || null,
-        p_items: items
-      });
+      result = await db.rpc('pj_update_receipt', { p_receipt_id: editingReceiptId, ...rpcArgs });
       if (result.error) { showToast('Error: ' + result.error.message, 'error'); return; }
       showToast('✅ Receipt updated', 'success');
       await renderEntry();
       return;
     }
 
-    result = await db.rpc('pj_create_receipt', {
-      p_receipt_date: new Date().toISOString().slice(0, 10),
-      p_donor_name: name, p_donor_whatsapp: whatsapp, p_donor_city: city,
-      p_donor_address: address || null, p_donor_email: email || null, p_donor_pan: pan || null,
-      p_want_80g: want80g, p_payment_mode: paymentMode, p_payment_ref: paymentRef || null,
-      p_items: items
-    });
+    result = await db.rpc('pj_create_receipt', { p_receipt_date: new Date().toISOString().slice(0, 10), ...rpcArgs });
     if (result.error) { showToast('Error: ' + result.error.message, 'error'); return; }
 
     const row = result.data && result.data[0];
@@ -235,7 +255,7 @@ async function loadTodayEntries() {
               <td>${r.receipt_no}</td>
               <td>${r.donor_name}<div class="list-item-sub">${r.donor_city}</div></td>
               <td><strong>${formatAmount(r.total_amount)}</strong></td>
-              <td><span class="badge ${r.payment_mode === 'cash' ? 'badge-cash' : 'badge-online'}">${r.payment_mode}</span></td>
+              <td><span class="badge ${paymentBadgeClass(r.payment_mode)}">${r.payment_mode}</span></td>
               <td><span class="badge ${r.locked ? 'badge-locked' : 'badge-open'}">${r.locked ? 'Printed' : 'Open'}</span></td>
               <td>
                 <div class="list-item-actions">
@@ -270,11 +290,14 @@ async function editReceipt(receiptId) {
   onWant80gChange();
   document.getElementById('e-payment-mode').value = r.payment_mode;
   document.getElementById('e-payment-ref').value = r.payment_ref || '';
+  document.getElementById('e-cheque-no').value = r.cheque_no || '';
+  document.getElementById('e-cheque-date').value = r.cheque_date || '';
+  document.getElementById('e-bank-name').value = r.bank_name || '';
   onPaymentModeChange();
   document.getElementById('e-save-btn').textContent = '💾 Update Receipt';
   document.getElementById('e-cancel-edit').style.display = 'block';
 
-  entryCart = (items || []).map(it => ({ head_id: it.head_id, head_name: '', amount: it.amount }));
+  entryCart = (items || []).map(it => ({ head_id: it.head_id, head_name: '', amount: it.amount, remark: it.remark || '' }));
   renderCartList();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }

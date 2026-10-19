@@ -237,6 +237,7 @@ body {
 .badge-draft { background: #FFF8E1; color: var(--warning); }
 .badge-cash { background: #E3F2FD; color: #1565C0; }
 .badge-online { background: #F3E5F5; color: #7B1FA2; }
+.badge-cheque { background: #FFF3E0; color: #E65100; }
 .badge-locked { background: #FFEBEE; color: var(--danger); }
 .badge-open { background: #E8F5E9; color: var(--success); }
 

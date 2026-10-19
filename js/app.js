@@ -93,6 +93,11 @@ function formatDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 }
+function paymentBadgeClass(mode) {
+  if (mode === 'cash') return 'badge-cash';
+  if (mode === 'cheque') return 'badge-cheque';
+  return 'badge-online';
+}
 function formatDateTime(d) {
   if (!d) return '—';
   return new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });

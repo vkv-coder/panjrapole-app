@@ -75,7 +75,7 @@ async function runReport() {
       const headName = (headsById[it.head_id] && headsById[it.head_id].name) || 'Head';
       reportRows.push({
         receipt_no: r.receipt_no, date: r.receipt_date, donor_name: r.donor_name, city: r.donor_city,
-        head_name: headName, amount: parseFloat(it.amount), payment_mode: r.payment_mode
+        head_name: headName, amount: parseFloat(it.amount), payment_mode: r.payment_mode, remark: it.remark || ''
       });
       headTotals[headName] = (headTotals[headName] || 0) + parseFloat(it.amount);
       grandTotal += parseFloat(it.amount);
@@ -111,7 +111,7 @@ async function runReport() {
                 <td>${r.donor_name}</td>
                 <td>${r.donor_city}</td>
                 <td><strong>${formatAmount(r.total_amount)}</strong></td>
-                <td><span class="badge ${r.payment_mode === 'cash' ? 'badge-cash' : 'badge-online'}">${r.payment_mode}</span></td>
+                <td><span class="badge ${paymentBadgeClass(r.payment_mode)}">${r.payment_mode}</span></td>
               </tr>
             `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No receipts in this range.</td></tr>'}
           </tbody>
@@ -125,10 +125,10 @@ function downloadReportExcel() {
   if (typeof XLSX === 'undefined') { showToast('Excel library not loaded. Check internet connection.', 'error'); return; }
   if (reportRows.length === 0) { showToast('Run a report first', 'error'); return; }
 
-  const detailRows = [['Receipt No', 'Date', 'Donor', 'City', 'Head', 'Amount', 'Payment Mode']];
-  reportRows.forEach(r => detailRows.push([r.receipt_no, r.date, r.donor_name, r.city, r.head_name, r.amount, r.payment_mode]));
+  const detailRows = [['Receipt No', 'Date', 'Donor', 'City', 'Head', 'Amount', 'Payment Mode', 'Remark']];
+  reportRows.forEach(r => detailRows.push([r.receipt_no, r.date, r.donor_name, r.city, r.head_name, r.amount, r.payment_mode, r.remark]));
   const wsDetail = XLSX.utils.aoa_to_sheet(detailRows);
-  wsDetail['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 22 }, { wch: 16 }, { wch: 28 }, { wch: 10 }, { wch: 10 }];
+  wsDetail['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 22 }, { wch: 16 }, { wch: 28 }, { wch: 10 }, { wch: 10 }, { wch: 24 }];
 
   const headTotals = {};
   reportRows.forEach(r => { headTotals[r.head_name] = (headTotals[r.head_name] || 0) + r.amount; });
