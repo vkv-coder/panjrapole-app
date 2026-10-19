@@ -441,9 +441,11 @@ grant execute on function pj_head_totals() to authenticated;
 -- ==========================================
 -- AFTER RUNNING THIS FILE:
 -- 1. Sign up your own admin account once via signup.html.
--- 2. Run this (with your real auth user id) to promote yourself to admin:
---    select id, name from pj_profiles;   -- find your row
---    select pj_admin_set_profile('<your-id-here>', 'admin', true);
+-- 2. Promote yourself to admin with a DIRECT update (not the
+--    pj_admin_set_profile RPC - that one requires an existing admin to call
+--    it, so it can't bootstrap the very first one; a direct update here
+--    works because the SQL Editor runs as the table owner, bypassing RLS):
+--    update pj_profiles set role = 'admin', active = true where name = 'your name here';
 -- 3. Log in as admin -> Settings -> set the starting receipt number before
 --    the first real receipt is entered.
 -- ==========================================
