@@ -111,7 +111,7 @@ function buildReceiptHTML(receipt, items, headsById, org) {
     <div class="receipt-no-line">પાવતી નંબર: <strong>${receipt.receipt_no}</strong></div>
     <div class="receipt-title-main"><span>દાનની રસીદ</span><span style="font-size:12px;font-weight:600;">તા. ${dateStr}</span></div>
     <div class="donor-box">
-      <div class="row"><span class="row-label">દાતા શ્રી નું નામ:</span><span class="row-value">${receipt.donor_name}</span></div>
+      <div class="row"><span class="row-label">દાતાનું નામ:</span><span class="row-value">${receipt.donor_name}</span></div>
       <div class="row"><span class="row-label">મો. નં.:</span><span class="row-value">${receipt.donor_whatsapp}</span></div>
       <div class="row"><span class="row-label">શહેર:</span><span class="row-value">${receipt.donor_city}</span></div>
       ${receipt.donor_address ? `<div class="row"><span class="row-label">સરનામું:</span><span class="row-value">${receipt.donor_address}</span></div>` : ''}
