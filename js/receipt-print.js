@@ -68,7 +68,7 @@ function buildPayInfoHTML(r) {
   if (r.payment_mode === 'online') {
     return `
       <div class="pay-info">
-        <strong>ચૂકવણી:</strong> ઓનલાઇન (Online)
+        <strong>ચૂકવણી:</strong> ઓનલાઇન
         <br><strong>ટ્રાન્જેક્શન/UPI નંબર:</strong> ${r.payment_ref || '—'}
         ${r.bank_name ? `<br><strong>બેંકનું નામ:</strong> ${r.bank_name}` : ''}
       </div>`;
@@ -77,13 +77,13 @@ function buildPayInfoHTML(r) {
     const chequeDateStr = r.cheque_date ? new Date(r.cheque_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
     return `
       <div class="pay-info">
-        <strong>ચૂકવણી:</strong> ચેક (Cheque)
+        <strong>ચૂકવણી:</strong> ચેક
         <br><strong>ચેક નંબર:</strong> ${r.cheque_no || '—'}
         <br><strong>ચેક ની તારીખ:</strong> ${chequeDateStr}
         ${r.bank_name ? `<br><strong>બેંકનું નામ:</strong> ${r.bank_name}` : ''}
       </div>`;
   }
-  return `<div class="pay-info"><strong>ચૂકવણી:</strong> રોકડા (Cash)</div>`;
+  return `<div class="pay-info"><strong>ચૂકવણી:</strong> રોકડા</div>`;
 }
 
 function buildReceiptHTML(receipt, items, headsById, org) {
@@ -121,7 +121,7 @@ function buildReceiptHTML(receipt, items, headsById, org) {
       <thead><tr><th style="width:20px;text-align:center;">અ.નં.</th><th>વિગત</th><th>રકમ</th><th>વિશેષ નોંધ</th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table>
-    <div class="total-row"><span>કુલ (Total)</span><span class="val">₹ ${total.toLocaleString('en-IN')} /-</span></div>
+    <div class="total-row"><span>કુલ</span><span class="val">₹ ${total.toLocaleString('en-IN')} /-</span></div>
     <div class="words-row">અંકે રૂપિયા ${numToGujaratiWords(total)} પૂરા</div>
     ${buildPayInfoHTML(receipt)}
     ${receipt.want_80g ? `<div class="g80-note">Donation given to Trust is Exempted under sub-section of Section 80G of the Income Tax Act.</div>` : ''}
