@@ -12,6 +12,7 @@ const SHELL_FILES = [
   '/js/live.js',
   '/js/receipts.js',
   '/js/heads.js',
+  '/js/locations.js',
   '/js/clerks.js',
   '/js/reports.js',
   '/js/settings.js',

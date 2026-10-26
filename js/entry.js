@@ -3,19 +3,34 @@
 // ==========================================
 
 let entryHeads = [];
+let entryLocations = [];
+let entryLocationsById = {};
 let entryCart = []; // [{ head_id, head_name, amount, remark }]
 let editingReceiptId = null; // non-null while editing an existing receipt
 
 async function renderEntry() {
   const content = document.getElementById('page-content');
-  const { data: heads } = await db.from('pj_heads').select('*').eq('active', true).order('sort_order');
+  const [{ data: heads }, { data: locations }] = await Promise.all([
+    db.from('pj_heads').select('*').eq('active', true).order('sort_order'),
+    db.from('pj_locations').select('*').eq('active', true).order('sort_order')
+  ]);
   entryHeads = heads || [];
+  entryLocations = locations || [];
+  entryLocationsById = {};
+  entryLocations.forEach(l => { entryLocationsById[l.id] = l; });
   entryCart = [];
   editingReceiptId = null;
 
   content.innerHTML = `
     <div class="card">
       <div class="card-title" id="entry-card-title">🙏 New Donation Receipt</div>
+      <div class="form-group">
+        <label>Location *</label>
+        <select id="e-location">
+          <option value="">-- Select Location --</option>
+          ${entryLocations.map(l => `<option value="${l.id}">${l.name} (${l.prefix})</option>`).join('')}
+        </select>
+      </div>
       <div class="form-group">
         <label>Donor Name *</label>
         <input type="text" id="e-name" placeholder="Donor's full name" />
@@ -176,6 +191,7 @@ function buildItemsPayload() {
 
 async function saveReceipt() {
   const btn = document.getElementById('e-save-btn');
+  const locationId = document.getElementById('e-location').value;
   const name = document.getElementById('e-name').value.trim();
   const whatsapp = document.getElementById('e-whatsapp').value.trim();
   const city = document.getElementById('e-city').value.trim();
@@ -189,6 +205,7 @@ async function saveReceipt() {
   const chequeDate = document.getElementById('e-cheque-date').value || null;
   const bankName = document.getElementById('e-bank-name').value.trim();
 
+  if (!locationId) { showToast('Select a location', 'error'); return; }
   if (!name) { showToast('Enter donor name', 'error'); return; }
   if (whatsapp.length !== 10) { showToast('Enter a valid 10-digit WhatsApp number', 'error'); return; }
   if (!city) { showToast('Enter city', 'error'); return; }
@@ -200,6 +217,7 @@ async function saveReceipt() {
   if (items.length === 0) { showToast('Add at least one donation head with an amount', 'error'); return; }
 
   const rpcArgs = {
+    p_location_id: locationId,
     p_donor_name: name, p_donor_whatsapp: whatsapp, p_donor_city: city,
     p_donor_address: address || null, p_donor_email: email || null, p_donor_pan: pan || null,
     p_want_80g: want80g, p_payment_mode: paymentMode, p_payment_ref: paymentRef || null,
@@ -222,7 +240,8 @@ async function saveReceipt() {
     if (result.error) { showToast('Error: ' + result.error.message, 'error'); return; }
 
     const row = result.data && result.data[0];
-    showToast(`✅ Receipt No. ${row.receipt_no} saved`, 'success');
+    const loc = entryLocationsById[locationId];
+    showToast(`✅ Receipt No. ${formatReceiptNo(loc && loc.prefix, row.receipt_no)} saved`, 'success');
     await renderEntry();
     if (row && row.id) await showReceiptPrintWindow(row.id, true);
   } finally {
@@ -234,10 +253,12 @@ async function loadTodayEntries() {
   const el = document.getElementById('today-entries');
   if (!el) return;
   const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await db.from('pj_receipts')
-    .select('*')
-    .eq('receipt_date', today)
-    .order('created_at', { ascending: false });
+  const [{ data, error }, { data: allLocations }] = await Promise.all([
+    db.from('pj_receipts').select('*').eq('receipt_date', today).order('created_at', { ascending: false }),
+    db.from('pj_locations').select('*')
+  ]);
+  const locById = {};
+  (allLocations || []).forEach(l => { locById[l.id] = l; });
 
   if (error) { el.innerHTML = `<p class="error-msg">${error.message}</p>`; return; }
   if (!data || data.length === 0) {
@@ -252,7 +273,7 @@ async function loadTodayEntries() {
         <tbody>
           ${data.map(r => `
             <tr>
-              <td>${r.receipt_no}</td>
+              <td>${formatReceiptNo(locById[r.location_id] && locById[r.location_id].prefix, r.receipt_no)}</td>
               <td>${r.donor_name}<div class="list-item-sub">${r.donor_city}</div></td>
               <td><strong>${formatAmount(r.total_amount)}</strong></td>
               <td><span class="badge ${paymentBadgeClass(r.payment_mode)}">${r.payment_mode}</span></td>
@@ -279,7 +300,9 @@ async function editReceipt(receiptId) {
   const { data: items } = await db.from('pj_receipt_items').select('*').eq('receipt_id', receiptId);
 
   editingReceiptId = receiptId;
-  document.getElementById('entry-card-title').textContent = `✎ Edit Receipt No. ${r.receipt_no}`;
+  const loc = entryLocationsById[r.location_id];
+  document.getElementById('entry-card-title').textContent = `✎ Edit Receipt No. ${formatReceiptNo(loc && loc.prefix, r.receipt_no)}`;
+  document.getElementById('e-location').value = r.location_id || '';
   document.getElementById('e-name').value = r.donor_name || '';
   document.getElementById('e-whatsapp').value = r.donor_whatsapp || '';
   document.getElementById('e-city').value = r.donor_city || '';

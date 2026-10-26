@@ -2,6 +2,8 @@
 // PANJRAPOLE - Receipts Search (admin only)
 // ==========================================
 
+let rsLocationsById = {};
+
 async function renderReceipts() {
   const content = document.getElementById('page-content');
 
@@ -10,13 +12,24 @@ async function renderReceipts() {
     return;
   }
 
+  const { data: locations } = await db.from('pj_locations').select('*').order('sort_order');
+  rsLocationsById = {};
+  (locations || []).forEach(l => { rsLocationsById[l.id] = l; });
+
   const todayStr = new Date().toISOString().slice(0, 10);
   content.innerHTML = `
     <div class="card">
       <div class="card-title">🧾 Search Receipts</div>
       <div class="form-group">
-        <label>Receipt No.</label>
-        <input type="number" id="rs-no" placeholder="e.g. 43371" />
+        <label>Location</label>
+        <select id="rs-location">
+          <option value="">-- All Locations --</option>
+          ${(locations || []).map(l => `<option value="${l.id}">${l.name} (${l.prefix})</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Receipt No. (number only, without prefix)</label>
+        <input type="number" id="rs-no" placeholder="e.g. 47" />
       </div>
       <div class="form-group">
         <label>From Date</label>
@@ -42,12 +55,14 @@ async function searchReceipts() {
   const el = document.getElementById('rs-results');
   el.innerHTML = 'Loading...';
 
+  const locationId = document.getElementById('rs-location').value;
   const no = document.getElementById('rs-no').value.trim();
   const from = document.getElementById('rs-from').value;
   const to = document.getElementById('rs-to').value;
   const name = document.getElementById('rs-name').value.trim();
 
   let q = db.from('pj_receipts').select('*').order('receipt_no', { ascending: false }).limit(200);
+  if (locationId) q = q.eq('location_id', locationId);
   if (no) q = q.eq('receipt_no', parseInt(no, 10));
   if (from) q = q.gte('receipt_date', from);
   if (to) q = q.lte('receipt_date', to);
@@ -68,7 +83,7 @@ async function searchReceipts() {
           <tbody>
             ${data.map(r => `
               <tr>
-                <td>${r.receipt_no}</td>
+                <td>${formatReceiptNo(rsLocationsById[r.location_id] && rsLocationsById[r.location_id].prefix, r.receipt_no)}</td>
                 <td>${formatDate(r.receipt_date)}</td>
                 <td>${r.donor_name}<div class="list-item-sub">${r.donor_city} · ${r.donor_whatsapp}</div></td>
                 <td><strong>${formatAmount(r.total_amount)}</strong></td>

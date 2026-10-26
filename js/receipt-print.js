@@ -86,9 +86,10 @@ function buildPayInfoHTML(r) {
   return `<div class="pay-info"><strong>ચૂકવણી:</strong> રોકડા</div>`;
 }
 
-function buildReceiptHTML(receipt, items, headsById, org) {
+function buildReceiptHTML(receipt, items, headsById, org, location) {
   const dateStr = new Date(receipt.receipt_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const total = parseFloat(receipt.total_amount);
+  const receiptNoDisplay = formatReceiptNo(location && location.prefix, receipt.receipt_no);
   const tableRows = items.map((it, i) => `
     <tr>
       <td style="text-align:center;color:#888;">${i + 1}</td>
@@ -108,9 +109,10 @@ function buildReceiptHTML(receipt, items, headsById, org) {
     <div class="org-reg">${org.org_phone ? 'ફોન: ' + org.org_phone + ' | ' : ''}PAN: ${org.org_pan || ''}</div>
   </div>
   <div class="receipt-body">
-    <div class="receipt-no-line">પાવતી નંબર: <strong>${receipt.receipt_no}</strong></div>
+    <div class="receipt-no-line">પાવતી નંબર: <strong>${receiptNoDisplay}</strong></div>
     <div class="receipt-title-main"><span>દાનની રસીદ</span><span style="font-size:12px;font-weight:600;">તા. ${dateStr}</span></div>
     <div class="donor-box">
+      ${location ? `<div class="row"><span class="row-label">સ્થળ:</span><span class="row-value">${location.name}</span></div>` : ''}
       <div class="row"><span class="row-label">દાતાનું નામ:</span><span class="row-value">${receipt.donor_name}</span></div>
       <div class="row"><span class="row-label">મો. નં.:</span><span class="row-value">${receipt.donor_whatsapp}</span></div>
       <div class="row"><span class="row-label">શહેર:</span><span class="row-value">${receipt.donor_city}</span></div>
@@ -137,9 +139,12 @@ async function loadReceiptBundle(receiptId) {
   const { data: items } = await db.from('pj_receipt_items').select('*').eq('receipt_id', receiptId);
   const { data: heads } = await db.from('pj_heads').select('*');
   const { data: org } = await db.from('pj_settings').select('*').eq('id', 1).single();
+  const { data: location } = receipt.location_id
+    ? await db.from('pj_locations').select('*').eq('id', receipt.location_id).single()
+    : { data: null };
   const headsById = {};
   (heads || []).forEach(h => { headsById[h.id] = h; });
-  return { receipt, items: items || [], headsById, org: org || {} };
+  return { receipt, items: items || [], headsById, org: org || {}, location: location || null };
 }
 
 async function showReceiptPrintWindow(receiptId, markPrintedFirst) {
@@ -151,15 +156,16 @@ async function showReceiptPrintWindow(receiptId, markPrintedFirst) {
 
   const bundle = await loadReceiptBundle(receiptId);
   if (!bundle) { showToast('Could not load receipt', 'error'); return; }
-  const { receipt, items, headsById, org } = bundle;
-  const receiptHtml = buildReceiptHTML(receipt, items, headsById, org);
+  const { receipt, items, headsById, org, location } = bundle;
+  const receiptHtml = buildReceiptHTML(receipt, items, headsById, org, location);
   const waPhone = (receipt.donor_whatsapp || '').replace(/\D/g, '');
+  const receiptNoDisplay = formatReceiptNo(location && location.prefix, receipt.receipt_no);
 
   const html = `<!DOCTYPE html>
 <html lang="gu">
 <head>
 <meta charset="UTF-8"/>
-<title>Receipt No. ${receipt.receipt_no}</title>
+<title>Receipt No. ${receiptNoDisplay}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hind+Vadodara:wght@400;600;700&display=swap" rel="stylesheet">
 <style>${RECEIPT_CSS}</style>
@@ -175,7 +181,7 @@ ${receiptHtml}
 </div>
 <script>
 const WA_PHONE = '${waPhone}';
-const RECEIPT_NO = '${receipt.receipt_no}';
+const RECEIPT_NO = '${receiptNoDisplay}';
 const DONOR_EMAIL = '${receipt.donor_email || ''}';
 const TOTAL_TEXT = '₹${parseFloat(receipt.total_amount).toLocaleString('en-IN')}';
 

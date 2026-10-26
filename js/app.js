@@ -20,6 +20,7 @@ function buildNav() {
     { id: 'live', label: '🔴 Live Totals' },
     { id: 'receipts', label: '🧾 Receipts' },
     { id: 'heads', label: '📋 Heads' },
+    { id: 'locations', label: '📍 Locations' },
     { id: 'clerks', label: '👤 Accountants' },
     { id: 'reports', label: '📊 Reports' },
     { id: 'settings', label: '⚙ Settings' },
@@ -51,6 +52,7 @@ async function loadTab(tabId) {
     case 'live': await renderLive(); break;
     case 'receipts': await renderReceipts(); break;
     case 'heads': await renderHeads(); break;
+    case 'locations': await renderLocations(); break;
     case 'clerks': await renderClerks(); break;
     case 'reports': await renderReports(); break;
     case 'settings': await renderSettings(); break;
@@ -92,6 +94,9 @@ function formatAmount(n) {
 function formatDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function formatReceiptNo(prefix, no) {
+  return (prefix ? prefix + '-' : '') + no;
 }
 function paymentBadgeClass(mode) {
   if (mode === 'cash') return 'badge-cash';
