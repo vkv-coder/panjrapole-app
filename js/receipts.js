@@ -90,7 +90,7 @@ async function searchReceipts() {
                 <td>
                   <div class="list-item-actions">
                     <button class="btn-sm btn-secondary" onclick="showReceiptPrintWindow('${r.id}', false)">🖨</button>
-                    <button class="btn-sm btn-secondary" onclick="openReceiptForEdit('${r.id}')">✎ Edit</button>
+                    ${(!r.locked || isAdmin()) ? `<button class="btn-sm btn-secondary" onclick="openReceiptForEdit('${r.id}')">✎ Edit</button>` : ''}
                   </div>
                 </td>
               </tr>
