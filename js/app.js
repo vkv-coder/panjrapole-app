@@ -27,6 +27,7 @@ function buildNav() {
   ];
   const clerkTabs = [
     { id: 'entry', label: '💰 Donation Entry' },
+    { id: 'receipts', label: '🧾 Receipts' },
   ];
 
   const tabs = isAdmin() ? adminTabs : clerkTabs;

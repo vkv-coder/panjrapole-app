@@ -1,16 +1,14 @@
 // ==========================================
-// PANJRAPOLE - Receipts Search (admin only)
+// PANJRAPOLE - Receipts Search
+// Admin sees every receipt; an accountant only ever sees their own (the
+// table's RLS select policy already restricts rows to created_by = self
+// unless the caller is admin - this screen doesn't need its own role gate).
 // ==========================================
 
 let rsLocationsById = {};
 
 async function renderReceipts() {
   const content = document.getElementById('page-content');
-
-  if (!isAdmin()) {
-    content.innerHTML = `<div class="card" style="text-align:center;padding:40px;"><div style="font-size:48px;margin-bottom:12px;">🔒</div><p style="color:var(--danger);font-weight:600;">Admin access only.</p></div>`;
-    return;
-  }
 
   const { data: locations } = await db.from('pj_locations').select('*').order('sort_order');
   rsLocationsById = {};
