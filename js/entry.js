@@ -144,8 +144,15 @@ function updateCartRow(index, field, value) {
   if (field === 'head_id') {
     const h = entryHeads.find(x => x.id === value);
     entryCart[index].head_name = h ? h.name : '';
+    renderCartList(); // re-render so the amount/remark labels switch for In Kind
+    return;
   }
   renderCartTotalOnly();
+}
+
+function isInKindHead(headId) {
+  const h = entryHeads.find(x => x.id === headId);
+  return !!(h && h.is_in_kind);
 }
 
 function renderCartList() {
@@ -156,34 +163,45 @@ function renderCartList() {
     document.getElementById('cart-total').textContent = '';
     return;
   }
-  el.innerHTML = entryCart.map((row, i) => `
+  el.innerHTML = entryCart.map((row, i) => {
+    const inKind = isInKindHead(row.head_id);
+    return `
     <div class="cart-row" style="flex-wrap:wrap;">
       <select class="cart-head-name" onchange="updateCartRow(${i},'head_id',this.value)">
         <option value="">-- Select Head --</option>
         ${entryHeads.map(h => `<option value="${h.id}" ${row.head_id === h.id ? 'selected' : ''}>${h.name}</option>`).join('')}
       </select>
       <div class="amount-input-wrap cart-amount">
-        <input type="number" min="1" placeholder="0" value="${row.amount}" oninput="updateCartRow(${i},'amount',this.value)" />
+        <input type="number" min="1" placeholder="${inKind ? 'Optional' : '0'}" value="${row.amount == null ? '' : row.amount}" oninput="updateCartRow(${i},'amount',this.value)" />
       </div>
       <button class="btn-sm btn-danger" onclick="removeCartRow(${i})">✕</button>
-      <input type="text" placeholder="Remark (optional)" value="${row.remark || ''}" style="flex-basis:100%;margin-top:6px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;" oninput="updateCartRow(${i},'remark',this.value)" />
+      <input type="text" placeholder="${inKind ? 'Item Name * (e.g. 2 bags wheat)' : 'Remark (optional)'}" value="${row.remark || ''}" style="flex-basis:100%;margin-top:6px;padding:8px 10px;border:1.5px solid ${inKind ? 'var(--primary-light)' : 'var(--border)'};border-radius:8px;font-size:13px;" oninput="updateCartRow(${i},'remark',this.value)" />
+      ${inKind ? '<div style="flex-basis:100%;font-size:11px;color:var(--text-muted);">In Kind — item name only, not counted in any total.</div>' : ''}
     </div>
-  `).join('');
+  `; }).join('');
   renderCartTotalOnly();
 }
 
 function renderCartTotalOnly() {
   const totalEl = document.getElementById('cart-total');
   if (!totalEl) return;
-  const total = entryCart.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+  const total = entryCart.reduce((s, r) => s + (isInKindHead(r.head_id) ? 0 : (parseFloat(r.amount) || 0)), 0);
   totalEl.textContent = entryCart.length ? ('Total: ' + formatAmount(total)) : '';
 }
 
+// Returns items on success, or a string error message if something's missing.
 function buildItemsPayload() {
   const items = [];
   for (const row of entryCart) {
+    if (!row.head_id) continue;
+    if (isInKindHead(row.head_id)) {
+      if (!(row.remark || '').trim()) return 'Enter the item name for each In Kind donation';
+      const amt = parseFloat(row.amount);
+      items.push({ head_id: row.head_id, amount: (amt > 0 ? amt : null), remark: row.remark.trim() });
+      continue;
+    }
     const amt = parseFloat(row.amount);
-    if (!row.head_id || !amt || amt <= 0) continue;
+    if (!amt || amt <= 0) continue;
     items.push({ head_id: row.head_id, amount: amt, remark: (row.remark || '').trim() || null });
   }
   return items;
@@ -214,6 +232,7 @@ async function saveReceipt() {
   if (paymentMode === 'cheque' && !chequeNo) { showToast('Enter the cheque number', 'error'); return; }
 
   const items = buildItemsPayload();
+  if (typeof items === 'string') { showToast(items, 'error'); return; }
   if (items.length === 0) { showToast('Add at least one donation head with an amount', 'error'); return; }
 
   const rpcArgs = {

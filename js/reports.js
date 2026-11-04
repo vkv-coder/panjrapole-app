@@ -81,14 +81,20 @@ async function runReport() {
     const locName = loc ? loc.name : 'Unknown';
     const receiptNoDisplay = formatReceiptNo(loc && loc.prefix, r.receipt_no);
     (itemsByReceipt[r.id] || []).forEach(it => {
-      const headName = (headsById[it.head_id] && headsById[it.head_id].name) || 'Head';
+      const head = headsById[it.head_id];
+      const headName = (head && head.name) || 'Head';
+      const amt = it.amount == null ? null : parseFloat(it.amount);
+      const isInKind = !!(head && head.is_in_kind);
       reportRows.push({
         receipt_no_display: receiptNoDisplay, date: r.receipt_date, donor_name: r.donor_name, city: r.donor_city,
-        location_name: locName, head_name: headName, amount: parseFloat(it.amount), payment_mode: r.payment_mode, remark: it.remark || ''
+        location_name: locName, head_name: headName, amount: amt, payment_mode: r.payment_mode, remark: it.remark || '', is_in_kind: isInKind
       });
-      headTotals[headName] = (headTotals[headName] || 0) + parseFloat(it.amount);
-      locationTotals[locName] = (locationTotals[locName] || 0) + parseFloat(it.amount);
-      grandTotal += parseFloat(it.amount);
+      // In Kind heads never count toward any total - item name only.
+      if (!isInKind && amt) {
+        headTotals[headName] = (headTotals[headName] || 0) + amt;
+        locationTotals[locName] = (locationTotals[locName] || 0) + amt;
+        grandTotal += amt;
+      }
     });
   });
 
@@ -155,14 +161,14 @@ function downloadReportExcel() {
   wsDetail['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 20 }, { wch: 22 }, { wch: 16 }, { wch: 28 }, { wch: 10 }, { wch: 10 }, { wch: 24 }];
 
   const headTotals = {};
-  reportRows.forEach(r => { headTotals[r.head_name] = (headTotals[r.head_name] || 0) + r.amount; });
+  reportRows.forEach(r => { if (r.amount && !r.is_in_kind) headTotals[r.head_name] = (headTotals[r.head_name] || 0) + r.amount; });
   const headRows = [['Head', 'Total']];
   Object.keys(headTotals).forEach(name => headRows.push([name, headTotals[name]]));
   const wsHead = XLSX.utils.aoa_to_sheet(headRows);
   wsHead['!cols'] = [{ wch: 28 }, { wch: 12 }];
 
   const locationTotals = {};
-  reportRows.forEach(r => { locationTotals[r.location_name] = (locationTotals[r.location_name] || 0) + r.amount; });
+  reportRows.forEach(r => { if (r.amount && !r.is_in_kind) locationTotals[r.location_name] = (locationTotals[r.location_name] || 0) + r.amount; });
   const locationRows = [['Location', 'Total']];
   Object.keys(locationTotals).forEach(name => locationRows.push([name, locationTotals[name]]));
   const wsLocation = XLSX.utils.aoa_to_sheet(locationRows);

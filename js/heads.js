@@ -35,6 +35,7 @@ async function loadHeadsList() {
     <div class="list-item">
       <div>
         <span class="list-item-name">${h.name}</span>
+        ${h.is_in_kind ? '<span class="badge badge-cheque" style="margin-left:6px;">In Kind — not counted</span>' : ''}
         ${!h.active ? '<span class="badge badge-locked" style="margin-left:6px;">Inactive</span>' : ''}
       </div>
       <div class="list-item-actions">

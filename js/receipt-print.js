@@ -94,7 +94,7 @@ function buildReceiptHTML(receipt, items, headsById, org, location) {
     <tr>
       <td style="text-align:center;color:#888;">${i + 1}</td>
       <td>${(headsById[it.head_id] && headsById[it.head_id].name) || 'Head'}</td>
-      <td>₹ ${parseFloat(it.amount).toLocaleString('en-IN')}</td>
+      <td>${it.amount == null ? '—' : '₹ ' + parseFloat(it.amount).toLocaleString('en-IN')}</td>
       <td style="font-size:10.5px;color:#666;">${it.remark || ''}</td>
     </tr>`).join('');
 
